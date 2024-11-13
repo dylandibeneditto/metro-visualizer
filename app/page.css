@@ -1,0 +1,19 @@
+* {
+    color: var(--sec);
+}
+
+body:has(.day) {
+    background: var(--day);
+}
+
+body:has(.night) {
+    background: var(--night);
+}
+
+#map {
+    width: 95vmin;
+    height: 95vmin;
+    background: clear;
+    background-image: url("/map.svg");
+    background-size: 95vmin;
+}
