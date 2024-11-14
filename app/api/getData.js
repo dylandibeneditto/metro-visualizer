@@ -36,7 +36,6 @@ export async function fetchStationArrivalEstimates(stationCode) {
         }
 
         const data = await response.json();
-        console.log(data)
 
         return data.Trains; // Assuming "Trains" contains the array of arrival estimates
     } catch (err) {

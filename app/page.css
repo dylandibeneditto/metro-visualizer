@@ -1,19 +1,35 @@
 * {
-    color: var(--sec);
+  color: var(--sec);
 }
 
 body:has(.day) {
-    background: var(--day);
+  background: var(--day);
 }
 
 body:has(.night) {
-    background: var(--night);
+  background: var(--night);
 }
 
 #map {
-    width: 95vmin;
-    height: 95vmin;
-    background: clear;
-    background-image: url("/map.svg");
-    background-size: 95vmin;
+  width: 95vmin;
+  height: 95vmin;
+  background-image: url("/map.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+.map-container {
+  position: relative;
+}
+.metro-map {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.metro-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
