@@ -3,7 +3,10 @@
 import "./global.css";
 import "./page.css";
 import { useEffect, useRef, useState } from "react";
-import { fetchTrainArrivals } from "./api/getData";
+import {
+  fetchStationArrivalEstimates,
+  fetchTrainArrivals,
+} from "./api/getData";
 
 export default function Home() {
   const canvasRef = useRef(null);
@@ -14,34 +17,61 @@ export default function Home() {
   useEffect(() => {
     async function loadTrainData() {
       try {
-        const trains = await fetchTrainArrivals();
-        setTrainData(trains.TrainPositions || []);
+        const trains = await fetchStationArrivalEstimates("All");
+        setTrainData(trains || []);
       } catch (err) {
         console.error("Error loading train data:", err);
         setError("Could not load train data");
       }
     }
 
-    //loadTrainData();
     const intervalId = setInterval(loadTrainData, 10000);
-
     return () => clearInterval(intervalId);
   }, []);
 
+  const stationLocation = {
+    RD: {
+      "Shady Grv": 0.013,
+      Rockville: 0.0445,
+      Twinbrook: 0.0755,
+      "North Bethesda": 0.106,
+      "Grosvenor-Strathmore": 0.1365,
+      "Medical Center": 0.1675,
+      Bethesda: 0.199,
+      "Friendship Heights": 0.229,
+      "Tenleytown-AU": 0.251,
+      "Van Ness-UDC": 0.271,
+      "Cleveland Park": 0.293,
+      "Woodley Park": 0.315,
+      "Dupont Circle": 0.335,
+      "Farragut North": 0.36,
+      "Metro Center": 0.465,
+      "Gallery Place": 0.5275,
+      "Judiciary Sq": 0.564,
+      "Union Station": 0.615,
+      "NoMa-Gallaudet U": 0.642,
+      "Rhode Island Ave": 0.668,
+      "Brookland-CUA": 0.693,
+      "Fort Totten": 0.7695,
+      Takoma: 0.855,
+      "Silver Spring": 0.915,
+      "Forest Glen": 0.94,
+      Wheaton: 0.965,
+      Glenmont: 0.99,
+    },
+  };
+
   useEffect(() => {
     const newTrains = trainData.map((train) => {
-      const path = linePaths[train.LineCode];
-      if (!path) return { ...train, progress: 0 };
-
-      // Example: assume `train.PositionAlongLine` is 0-1 (0% - 100% along path)
-      const progress = train.PositionAlongLine || 0;
+      const progress = stationLocation["RD"][train.LocationName] || 0;
       return { ...train, progress };
     });
     setAnimatedTrains(newTrains);
+    console.log(newTrains);
   }, [trainData]);
 
   const linePaths = {
-    RD: null,
+    RD: null, // Will be populated later
     BL: null,
     GR: null,
     YL: null,
@@ -49,91 +79,76 @@ export default function Home() {
     SV: null,
   };
 
-  const stationLocation = {
-    RD: {
-      "Shady Grove": .013,
-      "Rockville": .0445,
-      "Twinbrook": .0755,
-      "North Bethesda": .106,
-      "Grosvenor-Strathmore": .1365,
-      "Medical Center": .1675,
-      "Bethesda": .199,
-      "Friendship Heights": .229,
-      "Tenleytown-AU": .251,
-      "Van Ness-UDC": .271,
-      "Cleveland Park": .293,
-      "Woodley Park": .315,
-      "Dupont Circle": .335,
-      "Farragut North": .36,
-      "Metro Center": .465,
-      "Gallery Place": .5275,
-      "Judiciary Sq": .564,
-      "Union Station": .615,
-      "NoMa-Gallaudet U": .642,
-      "Rhode Island Ave": .668,
-      "Brookland-CUA": .693,
-      "Fort Totten": .7695,
-      "Takoma": .855,
-      "Silver Spring": .915,
-      "Forest Glen": .94,
-      "Wheaton": .965,
-      "Glenmont": .99,
-    }
-
-  }
   useEffect(() => {
+    // Assign SVG paths to the linePaths object
     linePaths.RD = document.querySelector("#RedLinePath");
     linePaths.BL = document.querySelector("#BlueLinePath");
     linePaths.GR = document.querySelector("#GreenLinePath");
     linePaths.YL = document.querySelector("#YellowLinePath");
     linePaths.OR = document.querySelector("#OrangeLinePath");
     linePaths.SV = document.querySelector("#SilverLinePath");
-  
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-  
+
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
+
       // Loop over each line and station in stationLocation
-      Object.entries(stationLocation).forEach(([lineCode, stations]) => {
+      /*Object.entries(stationLocation).forEach(([lineCode, stations]) => {
         const path = linePaths[lineCode];
         if (path) {
           const pathLength = path.getTotalLength();
-  
+
           // Loop over each station and draw it on the path
           Object.entries(stations).forEach(([stationName, stationPosition]) => {
-            const position = path.getPointAtLength(stationPosition * pathLength);
-            drawTrain(ctx, position.x, ((position.y - (2669 * 0.5)) * 0.902) + (2669 * 0.5), lineCode);
-  
+            const position = path.getPointAtLength(
+              stationPosition * pathLength
+            );
+            drawTrain(
+              ctx,
+              position.x,
+              (position.y - 1334) * 0.902 + 1334,
+              lineCode
+            );
+
             // For debugging, you could add station names or markers
             ctx.fillStyle = "black";
             ctx.font = "12px Arial";
-            ctx.fillText(stationName, position.x + 5, ((position.y - (2669 * 0.5)) * 0.902) + (2669 * 0.5) + 5);
+            ctx.fillText(
+              stationName,
+              position.x + 5,
+              (position.y - 1334) * 0.902 + 1334 + 5
+            );
           });
         }
-      });
-  
+      });*/
+
+      // Loop through trains and animate them
       animatedTrains.forEach((train) => {
-        const path = linePaths[train.LineCode];
+        const path = linePaths[train.Line];
         if (path) {
           const pathLength = path.getTotalLength();
           const position = path.getPointAtLength(train.progress * pathLength);
-          drawTrain(ctx, position.x, ((position.y - (2669 * 0.5)) * 0.902) + (2669 * 0.5), train.LineCode);
-  
-          train.progress = .0445;
+          drawTrain(
+            ctx,
+            position.x,
+            (position.y - 1334) * 0.902 + 1334,
+            train.Line
+          );
         }
+        train.position += .001
       });
-  
+
       requestAnimationFrame(animate);
     }
-  
+
     animate();
   }, [animatedTrains]);
 
   function drawTrain(ctx, x, y, lineCode) {
     ctx.beginPath();
-    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    ctx.arc(x, y, 10, 0, 2 * Math.PI);
     ctx.fillStyle = getColorForLine(lineCode);
     ctx.fill();
   }
